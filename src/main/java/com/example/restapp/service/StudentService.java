@@ -10,9 +10,14 @@ import static com.example.restapp.mappers.StudentMapper.toStudentModel;
 
 public class StudentService {
     private static StudentService studentInstance;
-    private static final StudentDAO STUDENT_DAO = new StudentDAO();
+    private StudentDAO studentDAO;
 
     private StudentService() {
+        studentDAO = new StudentDAO();
+    }
+
+    public StudentService(StudentDAO studentDAO) {
+        this.studentDAO = studentDAO;
     }
 
     public static StudentService getInstanceStudent() {
@@ -23,31 +28,34 @@ public class StudentService {
 
     public boolean createStudent(StudentDTO studentDTO) {
         Student student = toStudentModel(studentDTO);
-        if (!(STUDENT_DAO.selectStudentByName(student.getStudentName()))) {
-            STUDENT_DAO.createStudent(student);
+        if (!(studentDAO.selectStudentByName(student.getStudentName()))) {
+            studentDAO.createStudent(student);
             return true;
         }
         return false;
     }
 
-    public StudentDTO readStudent(long studentId) {
-        return STUDENT_DAO.selectStudent(studentId);
+    public StudentDTO getStudentByName(String studentName) {
+        if (!(studentDAO.selectStudent(studentName) == null)) {
+            return toStudentDto(studentDAO.selectStudent(studentName));
+        }
+        return null;
     }
 
     public boolean updateStudent(StudentDTO studentDTO, String oldName) {
         Student student = toStudentModel(studentDTO);
 
-        if ((STUDENT_DAO.selectStudentByName(oldName))) {
-            STUDENT_DAO.updateStudent(student, oldName);
+        if ((studentDAO.selectStudentByName(oldName))) {
+            studentDAO.updateStudent(student, oldName);
             return true;
         }
-        STUDENT_DAO.createStudent(student);
+        studentDAO.createStudent(student);
         return false;
     }
 
     public boolean deleteStudent(String studentName) {
-        if ((STUDENT_DAO.selectStudentByName(studentName))) {
-            return STUDENT_DAO.deleteStudent(studentName);
+        if ((studentDAO.selectStudentByName(studentName))) {
+            return studentDAO.deleteStudent(studentName);
         }
         return false;
     }

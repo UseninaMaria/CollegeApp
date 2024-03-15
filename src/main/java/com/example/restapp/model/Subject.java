@@ -11,10 +11,11 @@ public class Subject {
     public Subject() {
     }
 
-    public Subject(String nameSubject ) {
+    public Subject(String nameSubject) {
         this.nameSubject = nameSubject;
     }
-    public Subject(String nameSubject,List<String> collegeList ) {
+
+    public Subject(String nameSubject, List<String> collegeList) {
         this.nameSubject = nameSubject;
         this.collegeList = new ArrayList<>();
     }

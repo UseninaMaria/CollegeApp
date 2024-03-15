@@ -12,9 +12,14 @@ import static com.example.restapp.mappers.SubjectMapper.toSubjectModel;
 
 public class SubjectService {
     private static SubjectService instance;
-    private final static SubjectDAO SUBJECT_DAO = new SubjectDAO();
+    private SubjectDAO subjectDAO;
 
     private SubjectService() {
+        subjectDAO = new SubjectDAO();
+    }
+
+    public SubjectService(SubjectDAO subjectDAO) {
+        this.subjectDAO = subjectDAO;
     }
 
     public static SubjectService getSubjectService() {
@@ -23,40 +28,46 @@ public class SubjectService {
         } else return instance;
     }
 
-    public void createSubject(SubjectDTO subject) {
+    public boolean createSubject(SubjectDTO subject) {
         if (!subjectIsExist(subject)) {
-            SUBJECT_DAO.createSubject(toSubjectModel(subject));
+            subjectDAO.createSubject(toSubjectModel(subject));
+            return true;
         }
-        //Проверить метод equals, как он переопределен
+        return false;
     }
 
     public List<SubjectDTO> getAllSubjects() {
-        return SUBJECT_DAO.getAllSubjects().stream().map(subject -> {
+        return subjectDAO.getAllSubjects().stream().map(subject -> {
                     toSubjectDto(subject);
                     return toSubjectDto(subject);
                 })
                 .collect(Collectors.toList());
     }
 
-    public boolean updateSubject(SubjectDTO subjectDTO, String newName) {
-        Subject subject = toSubjectModel(subjectDTO);
-        if (subjectIsExist(subjectDTO)) {
-            SUBJECT_DAO.updateSubject(subject, newName);
+    public boolean updateSubject(String oldName, String newName) {
+
+        if (subjectDAO.getAllSubjectsName().contains(oldName)) {
+            subjectDAO.updateSubject(oldName, newName);
             return true;
         }
-        SUBJECT_DAO.createSubject(subject);
         return false;
     }
 
     public boolean deleteSubject(SubjectDTO subjectDTO) {
         Subject subject = toSubjectModel(subjectDTO);
         if (subjectIsExist(subjectDTO)) {
-            SUBJECT_DAO.deleteSubject(subject.getNameSubject());
+            subjectDAO.deleteSubject(subject.getNameSubject());
             return true;
         }
         return false;
     }
 
+    /**
+     * Этот метод проверяет существует ли в базе данных заданный предмет
+     *
+     * @param subjectDTO название предмета, для которого требуется получить список колледжей
+     * @return true - если такой прдемет уже есть в базе данных, false - если нет
+     */
     private boolean subjectIsExist(SubjectDTO subjectDTO) {
         List<SubjectDTO> subjectDTOList = getAllSubjects();
         return subjectDTOList.stream().anyMatch(s -> s.getNameSubjectDto()

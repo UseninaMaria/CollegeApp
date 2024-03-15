@@ -2,7 +2,7 @@ package com.example.restapp.dto;
 
 
 public class StudentDTO {
-    private  String studentNameDto;
+    private String studentNameDto;
     private int collegeId;
     private double gpa;
 

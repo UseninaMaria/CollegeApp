@@ -1,11 +1,8 @@
 package com.example.restapp.servlet;
 
-import com.example.restapp.dto.CollegeDTO;
-import com.example.restapp.dto.StudentDTO;
 import com.example.restapp.dto.SubjectDTO;
 import com.example.restapp.model.Subject;
 import com.example.restapp.service.SubjectService;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.gson.Gson;
 
 import javax.servlet.ServletException;
@@ -13,7 +10,6 @@ import javax.servlet.annotation.WebServlet;
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
-import java.io.BufferedReader;
 import java.io.IOException;
 import java.util.List;
 
@@ -52,9 +48,18 @@ public class SubjectServlet extends HttpServlet {
             resp.setStatus(HttpServletResponse.SC_BAD_REQUEST);
             resp.getWriter().write("\"respone\": \"\"SubjectsName does not be empty \"}");
         } else {
-            subjectService.createSubject(toSubjectDto(new Subject(subjectName)));
-            resp.setStatus(HttpServletResponse.SC_CREATED);
-            resp.getWriter().write("Subject this name: " + subjectName + " created successfully");
+            SubjectDTO subjectDTO = new SubjectDTO();
+            subjectDTO.setNameSubjectDto(subjectName);
+
+            boolean createFlag = subjectService.createSubject(subjectDTO);
+
+            if (createFlag) {
+                resp.setStatus(HttpServletResponse.SC_CREATED);
+                resp.getWriter().write("Subject this name: " + subjectName + " created successfully");
+            } else {
+                resp.setStatus(HttpServletResponse.SC_OK);
+                resp.getWriter().write("Subject this name: " + subjectName + " already exist");
+            }
         }
     }
 
@@ -68,14 +73,15 @@ public class SubjectServlet extends HttpServlet {
             resp.setStatus(HttpServletResponse.SC_BAD_REQUEST);
             resp.getWriter().write("\"respone\": \"\"Subjects name or New name does not be empty \"}");
         }
-        boolean updateFlag = subjectService.updateSubject(toSubjectDto(new Subject(name)), newName);
+
+        boolean updateFlag = subjectService.updateSubject(name, newName);
 
         if (updateFlag) {
             resp.setStatus(HttpServletResponse.SC_OK);
             resp.getWriter().write("Subjects this name: " + name + " update successfully");
         } else {
-            resp.setStatus(HttpServletResponse.SC_CREATED);
-            resp.getWriter().write("Subjects this name: " + name + " create successfully");
+            resp.setStatus(HttpServletResponse.SC_NOT_FOUND);
+            resp.getWriter().write("Subjects this name: " + name + "  does not exist");
         }
     }
 
@@ -88,16 +94,16 @@ public class SubjectServlet extends HttpServlet {
         if (subjectName == null) {
             resp.setStatus(HttpServletResponse.SC_BAD_REQUEST);
             resp.getWriter().write("\"respone\": \"\"Subjects Name does not be empty \"}");
-        }
-
-        boolean deleteFlag = subjectService.deleteSubject(toSubjectDto(new Subject(subjectName)));
-
-        if (deleteFlag) {
-            resp.setStatus(HttpServletResponse.SC_OK);
-            resp.getWriter().write("This subject: " + subjectName + " deleted successfully");
         } else {
-            resp.setStatus(HttpServletResponse.SC_BAD_REQUEST);
-            resp.getWriter().write("Subject this name: " + subjectName + " does not exist");
+            boolean deleteFlag = subjectService.deleteSubject(toSubjectDto(new Subject(subjectName)));
+
+            if (deleteFlag) {
+                resp.setStatus(HttpServletResponse.SC_OK);
+                resp.getWriter().write("This subject: " + subjectName + " deleted successfully");
+            } else {
+                resp.setStatus(HttpServletResponse.SC_NOT_FOUND);
+                resp.getWriter().write("Subject this name: " + subjectName + " does not exist");
+            }
         }
     }
 }

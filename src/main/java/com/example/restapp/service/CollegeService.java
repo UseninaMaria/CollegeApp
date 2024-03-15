@@ -7,14 +7,18 @@ import com.example.restapp.repository.CollegeDAO;
 import java.util.List;
 import java.util.stream.Collectors;
 
-import static com.example.restapp.mappers.СollegeMapper.toCollegeDto;
-import static com.example.restapp.mappers.СollegeMapper.toCollegeModel;
+import static com.example.restapp.mappers.СollegeMapper.*;
 
 public class CollegeService {
     private static CollegeService instance;
-    private final static CollegeDAO COLLEGE_DAO = new CollegeDAO();
+    private final CollegeDAO collegeDAO;
 
     private CollegeService() {
+        collegeDAO = new CollegeDAO();
+    }
+
+    public CollegeService(CollegeDAO collegeDAO) {
+        this.collegeDAO = collegeDAO;
     }
 
     public static CollegeService getCollegeService() {
@@ -25,59 +29,62 @@ public class CollegeService {
 
     public boolean createCollege(CollegeDTO collegeDTO) {
         College college = toCollegeModel(collegeDTO);
-        List<College> existingColleges = COLLEGE_DAO.selectAllColleges();
+        List<College> existingColleges = collegeDAO.selectAllColleges();
 
         if (!existingColleges.stream().anyMatch(c -> c.getNameCollege().equals(college.getNameCollege()))) {
-            return COLLEGE_DAO.createCollege(college);
+            return collegeDAO.createCollege(college);
         }
         return false;
     }
 
     public List<CollegeDTO> getAllColleges() {
-        return COLLEGE_DAO.selectAllColleges()
+        return collegeDAO.selectAllColleges()
                 .stream()
                 .map(college -> {
                     CollegeDTO collegeDTO = toCollegeDto(college);
-                    return collegeDTO;
+                    return DTOtoDto(collegeDTO);
                 })
                 .collect(Collectors.toList());
     }
 
     public CollegeDTO getCollegeByName(String nameCollege) {
-        List<College> existingColleges = COLLEGE_DAO.selectAllColleges();
+        List<College> existingColleges = collegeDAO.selectAllColleges();
 
         if (existingColleges.stream().anyMatch(c -> c.getNameCollege().equals(nameCollege))) {
-            College college = COLLEGE_DAO.selectCollegeByName(nameCollege);
-            CollegeDTO collegeDTO = toCollegeDto(college);
-            return collegeDTO;
+            College college = collegeDAO.selectCollegeByName(nameCollege);
+            return toCollegeDto(college);
         }
         return null;
     }
 
     public boolean updateCollegeName(String oldName, String newName) {
-        List<College> existingColleges = COLLEGE_DAO.selectAllColleges();
+        List<College> existingColleges = collegeDAO.selectAllColleges();
 
         if (existingColleges.stream().anyMatch(c -> c.getNameCollege().equals(oldName))) {
-            return COLLEGE_DAO.updateCollegeName(oldName, newName);
+            return collegeDAO.updateCollegeName(oldName, newName);
         }
         return false;
     }
 
     public boolean updateCollegeRating(String nameCollege, double rating) {
-        List<College> existingColleges = COLLEGE_DAO.selectAllColleges();
+        List<College> existingColleges = collegeDAO.selectAllColleges();
 
         if (existingColleges.stream().anyMatch(c -> c.getNameCollege()
-                .equals(nameCollege) && c.getRating() == rating)) {
-            return COLLEGE_DAO.updateCollegeRating(nameCollege, rating);
+                .equals(nameCollege))) {
+            return collegeDAO.updateCollegeRating(nameCollege, rating);
         }
         return false;
     }
 
+    public boolean addSubjectInCollege(String nameCollege, String nameSubject) {
+        return collegeDAO.addCollegeListSubject(nameCollege, nameSubject);
+    }
+
     public boolean deleteCollege(String name) {
-        List<College> existingColleges = COLLEGE_DAO.selectAllColleges();
+        List<College> existingColleges = collegeDAO.selectAllColleges();
 
         if (existingColleges.stream().anyMatch(c -> c.getNameCollege().equals(name))) {
-            return COLLEGE_DAO.deleteCollege(name);
+            return collegeDAO.deleteCollege(name);
         }
         return false;
     }

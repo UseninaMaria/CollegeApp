@@ -5,6 +5,7 @@ public class Student {
     private String studentName;
     private int collegeId;
     private double gpa;
+
     public Student() {
     }
 
@@ -42,7 +43,7 @@ public class Student {
     @Override
     public String toString() {
         return "Student{" +
-                ", studentName='" + studentName + '\'' +
+                "studentName='" + studentName + '\'' +
                 ", collegeId=" + collegeId +
                 ", gpa=" + gpa +
                 '}';

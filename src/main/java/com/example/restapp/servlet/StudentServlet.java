@@ -1,7 +1,6 @@
 package com.example.restapp.servlet;
 
 import com.example.restapp.dto.StudentDTO;
-import com.example.restapp.model.Student;
 import com.example.restapp.service.StudentService;
 import com.google.gson.Gson;
 
@@ -13,13 +12,11 @@ import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.util.Optional;
 
-import static com.example.restapp.mappers.StudentMapper.toStudentDto;
 import static com.example.restapp.service.StudentService.getInstanceStudent;
 
 @WebServlet("/college/students")
 public class StudentServlet extends HttpServlet {
     private static final String CONTENT_TYPE = "application/json";
-    private static final String STUDENT_ID_REQUEST_PARAMETER = "id";
     private static final String STUDENT_NAME_REQUEST_PARAMETER = "name";
     private static final String STUDENT_NEW_NAME_REQUEST_PARAMETER = "newName";
     private static final String COLLEGE_ID_REQUEST_PARAMETER = "collegeId";
@@ -28,42 +25,23 @@ public class StudentServlet extends HttpServlet {
     private Gson gson = new Gson();
 
     @Override
-    protected void doGet(HttpServletRequest req, HttpServletResponse resp) throws ServletException {
+    protected void doGet(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
         resp.setContentType(CONTENT_TYPE);
 
-        Optional.ofNullable(req.getParameter(STUDENT_ID_REQUEST_PARAMETER))
-                .map(id -> {
-                    try {
-                        return Long.parseLong(id);
-                    } catch (NumberFormatException e) {
-                        return null;
-                    }
-                })
-                .filter(id -> id != null && id > 0)
-                .ifPresentOrElse(
-                        studentId -> {
-                            StudentDTO studentDTO = studentService.readStudent(studentId);
-                            String json = gson.toJson(studentDTO);
+        String studentName = req.getParameter(STUDENT_NAME_REQUEST_PARAMETER);
+        StudentDTO studentDTO = studentService.getStudentByName(studentName);
 
-                            resp.setStatus(HttpServletResponse.SC_OK);
+        if (!(studentDTO == null)) {
+            String json = gson.toJson(studentDTO);
 
-                            try {
-                                resp.getWriter().write(json);
-                            } catch (IOException e) {
-                                e.printStackTrace();
-                            }
-                        },
-
-                        () -> {
-                            resp.setStatus(HttpServletResponse.SC_BAD_REQUEST);
-                            try {
-                                resp.getWriter().write("\"response\": \"Invalid student id\"");
-                            } catch (IOException e) {
-                                e.printStackTrace();
-                            }
-                        }
-                );
+            resp.setStatus(HttpServletResponse.SC_OK);
+            resp.getWriter().write(json);
+        } else {
+            resp.setStatus(HttpServletResponse.SC_NOT_FOUND);
+            resp.getWriter().write("Student this name: " + studentName + " does not exist");
+        }
     }
+
 
     @Override
     protected void doPost(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
@@ -82,18 +60,23 @@ public class StudentServlet extends HttpServlet {
 
         if (nameOptional.isEmpty() || collegeId < 0 || gpa < 0) {
             resp.setStatus(HttpServletResponse.SC_BAD_REQUEST);
-            resp.getWriter().write("{\"response\": \"College name or college rating should not be empty" +
+            resp.getWriter().write("{\"response\": \"Student name or student rating or gpa should not be empty" +
                     " and rating should be non-negative\"}");
         } else {
-            StudentDTO studentDTO = toStudentDto(new Student(name, collegeId, gpa));
+            StudentDTO studentDTO = new StudentDTO();
+
+            studentDTO.setStudentNameDto(name);
+            studentDTO.setCollegeId(collegeId);
+            studentDTO.setGpa(gpa);
+
             boolean findFlag = studentService.createStudent(studentDTO);
 
             if (findFlag) {
                 resp.setStatus(HttpServletResponse.SC_CREATED);
-                resp.getWriter().write("College created successfully " + studentDTO);
+                resp.getWriter().write("Student created successfully " + studentDTO);
             } else {
                 resp.setStatus(HttpServletResponse.SC_CREATED);
-                resp.getWriter().write("College this name: " + studentDTO + " already exist");
+                resp.getWriter().write("Student this name: " + studentDTO + " already exist");
             }
         }
     }
@@ -118,9 +101,14 @@ public class StudentServlet extends HttpServlet {
 
                 if (newCollegeId < 0 || newGpa < 0) {
                     resp.setStatus(HttpServletResponse.SC_BAD_REQUEST);
-                    resp.getWriter().write("{\"response\": \"College ID and GPA should be non-negative\"}");
+                    resp.getWriter().write("{\"response\": \"Student ID and GPA should be non-negative\"}");
                 } else {
-                    StudentDTO studentDTO = toStudentDto(new Student(newName, newCollegeId, newGpa));
+                    StudentDTO studentDTO = new StudentDTO();
+
+                    studentDTO.setStudentNameDto(newName);
+                    studentDTO.setCollegeId(newCollegeId);
+                    studentDTO.setGpa(newGpa);
+
                     boolean updateFlag = studentService.updateStudent(studentDTO, oldName);
 
                     if (updateFlag) {
@@ -145,7 +133,7 @@ public class StudentServlet extends HttpServlet {
 
         if (studentName == null) {
             resp.setStatus(HttpServletResponse.SC_BAD_REQUEST);
-            resp.getWriter().write("\"respone\": \"\"Student this id does not exist \"}");
+            resp.getWriter().write("\"respone\": \"\"Student this name does not exist \"}");
         } else {
 
             boolean deleteFlag = studentService.deleteStudent(studentName);
@@ -154,8 +142,8 @@ public class StudentServlet extends HttpServlet {
                 resp.setStatus(HttpServletResponse.SC_OK);
                 resp.getWriter().write("Student this name: " + studentName + " deleted successfully");
             } else {
-                resp.setStatus(HttpServletResponse.SC_BAD_GATEWAY);
-                resp.getWriter().write("Something went wrong");
+                resp.setStatus(HttpServletResponse.SC_NOT_FOUND);
+                resp.getWriter().write("Student this name does not exist");
             }
         }
     }

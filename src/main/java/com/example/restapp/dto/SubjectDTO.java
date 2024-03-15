@@ -14,6 +14,7 @@ public class SubjectDTO {
         this.nameSubjectDto = nameSubjectDto;
 
     }
+
     public List<String> getCollegeListDto() {
         return collegeListDto;
     }
